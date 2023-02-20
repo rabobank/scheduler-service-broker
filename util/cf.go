@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/model"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 )
@@ -58,7 +58,7 @@ func IsUserAuthorisedForSpace(token jwt.Token, spaceGuid string) bool {
 		return false
 	} else {
 		var body []byte
-		if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		if body, err = io.ReadAll(resp.Body); err != nil {
 			fmt.Printf("failed to read response from /v3/roles query to Cloud Controller: %s\n", err)
 			return false
 		} else {
@@ -83,7 +83,7 @@ func IsAppBoundToSchedulerService(appguid string) bool {
 		fmt.Println(err)
 		return false
 	} else {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		response := model.GenericV3Response{}
 		if err = json.Unmarshal(body, &response); err != nil {
 			fmt.Println(err)
@@ -94,7 +94,7 @@ func IsAppBoundToSchedulerService(appguid string) bool {
 			if resp, err = CfClient.DoRequest(req); err != nil {
 				fmt.Println(err)
 			} else {
-				body, _ = ioutil.ReadAll(resp.Body)
+				body, _ = io.ReadAll(resp.Body)
 				if err = json.Unmarshal(body, &response); err != nil {
 					fmt.Println(err)
 					return false

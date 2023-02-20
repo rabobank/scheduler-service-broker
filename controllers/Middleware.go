@@ -9,7 +9,7 @@ import (
 	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/model"
 	"github.com/rabobank/scheduler-service-broker/util"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -64,7 +64,7 @@ func CheckJWTMiddleware(next http.Handler) http.Handler {
 						return nil, fmt.Errorf("empty response from uaa server while getting /token_keys")
 					}
 					var bodyBytes []byte
-					if bodyBytes, err = ioutil.ReadAll(resp.Body); err != nil {
+					if bodyBytes, err = io.ReadAll(resp.Body); err != nil {
 						return nil, err
 					} else {
 						var uaaPubKeys model.TokenKeys

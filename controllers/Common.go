@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/context"
 	"github.com/rabobank/scheduler-service-broker/util"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -31,7 +31,7 @@ func ValidateRequest(w http.ResponseWriter, r *http.Request) (bool, string, Gene
 		util.WriteHttpResponse(w, http.StatusBadRequest, "failed to parse access token")
 	} else {
 		userId = token.Claims.(jwt.MapClaims)["user_id"].(string)
-		if body, err := ioutil.ReadAll(r.Body); err != nil {
+		if body, err := io.ReadAll(r.Body); err != nil {
 			util.WriteHttpResponse(w, http.StatusBadRequest, fmt.Sprintf("failed to read request body: %s", err))
 		} else {
 			if err = json.Unmarshal(body, &requestObject); err != nil {

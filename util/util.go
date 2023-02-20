@@ -10,7 +10,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/model"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -61,18 +61,18 @@ func DumpRequest(r *http.Request) {
 
 		// dump the request body
 		fmt.Println("dumping request body...")
-		if body, err := ioutil.ReadAll(r.Body); err != nil {
+		if body, err := io.ReadAll(r.Body); err != nil {
 			fmt.Printf("Error reading body: %v\n", err)
 		} else {
 			fmt.Println(string(body))
 			// Restore the io.ReadCloser to it's original state
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
 		}
 	}
 }
 
 func ProvisionObjectFromRequest(r *http.Request, object interface{}) error {
-	if body, err := ioutil.ReadAll(r.Body); err != nil {
+	if body, err := io.ReadAll(r.Body); err != nil {
 		fmt.Printf("failed to read json object from request, error: %s\n", err)
 		return err
 	} else {
