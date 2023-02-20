@@ -11,7 +11,7 @@ The configuration for the template broker consists of the following environment 
 * **SSB_HTTP_TIMEOUT** - Timeout in seconds for connecting to UAA endpoint, default is 10.
 * **SSB_CLIENT_ID** - The uaa client to use for logging in, should have ??? scope.
 * **SSB_CFAPI_URL** - The URL where to reach the cf api.
-* **SSB_SCHEDULER_ENDPOINT** - The URL where to reach the scheduler rest endpoint (i.e. https://scheduler.sys.<cf domain>). This is used by the scheduler-plugin.
+* **SSB_SCHEDULER_ENDPOINT** - The URL where to reach the scheduler rest endpoint (i.e. https://scheduler.sys.\<cf domain\>). This is used by the scheduler-plugin.
 * **SSB_BROKER_USER** - The userid for the broker (should be specified issuing the _cf create-service-broker_ cmd).
 * **SSB_CATALOG_DIR** - The directory where to find the cf catalog for the broker, the directory should contain a file called catalog.json.
 * **SSB_LISTEN_PORT** - The port that the broker should listen on, default is 8080.
