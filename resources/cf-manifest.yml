@@ -1,0 +1,13 @@
+applications:
+  - name: scheduler-service-broker
+    path: .
+    buildpacks:
+      - binary_buildpack
+    memory: 32M
+    health-check-type: process
+    command: chmod 755 scheduler-service-broker && ./scheduler-service-broker
+    env:
+      BROKER_USER: scheduler-service-broker-user
+      BROKER_PASSWORD: scheduler-service-broker-password
+      CATALOG_DIR: ./catalog
+      DEBUG: true

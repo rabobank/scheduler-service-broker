@@ -1,0 +1,31 @@
+{
+  "services": [
+    {
+      "name": "scheduler",
+      "id": "5479dd6b-e851-42a4-9af9-69c2ee023cce",
+      "description": "A service that can schedule calls and cf tasks",
+      "requires": [],
+      "tags": [],
+      "bindable": true,
+      "metadata": {
+        "shareable": false,
+        "longDescription": "This service should be used in conjunction with a cf cli plugin to add/delete schedules, jobs and calls",
+        "displayName": "Cloud Foundry Scheduler Service",
+        "documentationUrl": "url-where-to-find-more-documentation"
+      },
+      "maximum_polling_duration": 7200,
+      "plan_updateable": false,
+      "plans": [
+        {
+          "name": "standard",
+          "id": "06b5a81b-437e-4755-b769-545ed036777c",
+          "description": "standard is the only plan",
+          "metadata": {
+            "cost": 0,
+            "bullets": []
+          }
+        }
+      ]
+    }
+  ]
+}
