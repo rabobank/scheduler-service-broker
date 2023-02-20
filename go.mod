@@ -5,10 +5,11 @@ go 1.20
 require (
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20211117203709-9b81b3940cc7
 	github.com/cloudfoundry-community/go-cfenv v1.18.0
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/mux v1.8.0
+	github.com/robfig/cron/v3 v3.0.1
 )
 
 require (
@@ -17,7 +18,6 @@ require (
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
