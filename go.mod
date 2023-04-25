@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20211117203709-9b81b3940cc7
 	github.com/cloudfoundry-community/go-cfenv v1.18.0
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/mux v1.8.0
