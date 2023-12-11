@@ -251,8 +251,19 @@ func DoJob(scheduledTime time.Time, job model.SchedulableJob) {
 		ScheduleGuid:       job.ScheduleGuid,
 		CreatedAt:          time.Now(),
 	}
+	// prepare the post body, the memory and disk are optional
+	postBodyDiskPart := ""
+	postBodyMemoryPart := ""
+	if job.DiskInMB > 0 {
+		postBodyDiskPart = fmt.Sprintf(",\"disk_in_mb\":\"%d\"", job.DiskInMB)
+	}
+	if job.MemoryInMB > 0 {
+		postBodyMemoryPart = fmt.Sprintf(",\"memory_in_mb\":\"%d\"", job.MemoryInMB)
+	}
+	postBody := fmt.Sprintf("{ \"command\": \"%s\" %s %s}", strings.ReplaceAll(job.Command, `"`, `\"`), postBodyDiskPart, postBodyMemoryPart)
+
 	// run the actual cf task  (https://v3-apidocs.cloudfoundry.org/version/3.112.0/index.html#create-a-task):
-	req := util.CfClient.NewRequestWithBody(http.MethodPost, fmt.Sprintf("/v3/apps/%s/tasks", job.AppGuid), strings.NewReader(fmt.Sprintf("{ \"command\": \"%s\" }", strings.ReplaceAll(job.Command, `"`, `\"`))))
+	req := util.CfClient.NewRequestWithBody(http.MethodPost, fmt.Sprintf("/v3/apps/%s/tasks", job.AppGuid), strings.NewReader(postBody))
 	if resp, err := util.CfClient.DoRequest(req); err != nil {
 		fmt.Printf("failed running cmd %s in app with guid %s: %s\n", job.Command, job.AppGuid, err)
 	} else {

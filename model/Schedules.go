@@ -38,6 +38,8 @@ type SchedulableJob struct {
 	AppGuid      string
 	SpaceGuid    string
 	Command      string
+	MemoryInMB   int
+	DiskInMB     int
 }
 
 type SchedulableCall struct {

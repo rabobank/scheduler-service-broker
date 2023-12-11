@@ -18,6 +18,8 @@ type GenericRequestFitsAll struct {
 	CronExpression string `json:"cronexpression,omitempty"`
 	ExpressionType string `json:"expressiontype,omitempty"`
 	Command        string `json:"command,omitempty"`
+	MemoryInMB     int    `json:"memory_in_mb,omitempty"`
+	DiskInMB       int    `json:"disk_in_mb,omitempty"`
 	Url            string `json:"url,omitempty"`
 	AuthHeader     string `json:"authheader,omitempty"`
 	ScheduleGuid   string `json:"scheduleguid,omitempty"`

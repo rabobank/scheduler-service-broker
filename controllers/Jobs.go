@@ -23,7 +23,7 @@ func JobCreate(w http.ResponseWriter, r *http.Request) {
 					util.WriteHttpResponse(w, http.StatusBadRequest, fmt.Sprintf("app with guid %s is not bound to an instance of scheduler", req.AppGUID))
 				} else {
 					// try to insert the job
-					if jobguid, err := db.InsertJob(db.Job{AppGuid: req.AppGUID, SpaceGuid: req.SpaceGUID, Name: req.Name, Command: req.Command}); err != nil {
+					if jobguid, err := db.InsertJob(db.Job{AppGuid: req.AppGUID, SpaceGuid: req.SpaceGUID, Name: req.Name, Command: req.Command, MemoryInMB: req.MemoryInMB, DiskInMB: req.DiskInMB}); err != nil {
 						util.WriteHttpResponse(w, http.StatusInternalServerError, fmt.Sprintf("failed to create job: %s", err))
 					} else {
 						fmt.Printf("userId %s created job with guid %s for space guid %s\n", userId, jobguid, req.SpaceGUID)
@@ -44,7 +44,7 @@ func JobRun(w http.ResponseWriter, r *http.Request) {
 				// there should only be a result of length 1:
 				job := existingJobs[0]
 				go func() {
-					cron.DoJob(time.Now(), model.SchedulableJob{JobName: job.Name, AppGuid: job.AppGuid, SpaceGuid: job.SpaceGuid, Command: job.Command})
+					cron.DoJob(time.Now(), model.SchedulableJob{JobName: job.Name, AppGuid: job.AppGuid, SpaceGuid: job.SpaceGuid, Command: job.Command, MemoryInMB: job.MemoryInMB, DiskInMB: job.DiskInMB})
 				}()
 				fmt.Printf("userId %s ran job for space guid %s\n", userId, req.SpaceGUID)
 				util.WriteHttpResponse(w, http.StatusOK, fmt.Sprintf("run scheduled for job %s", req.Name))
@@ -66,7 +66,7 @@ func JobGet(w http.ResponseWriter, r *http.Request) {
 				if app, err := util.CfClient.GetAppByGuid(job.AppGuid); err == nil {
 					appName = app.Name
 				}
-				jobs = append(jobs, model.Job{JobName: job.Name, AppName: appName, Command: job.Command})
+				jobs = append(jobs, model.Job{JobName: job.Name, AppName: appName, Command: job.Command, MemoryInMB: job.MemoryInMB, DiskInMB: job.DiskInMB})
 			}
 			util.WriteHttpResponse(w, http.StatusOK, model.JobListResponse{Jobs: jobs})
 		}

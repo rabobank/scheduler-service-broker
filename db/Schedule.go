@@ -26,7 +26,7 @@ func InsertJobSchedule(scheduleCreateRequest model.ScheduleRequest) (string, Job
 	var linkedJob Job
 	var newGuid string
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var jobs []Job
 	if jobs, err = GetJobs(scheduleCreateRequest.SpaceGUID, ""); err != nil {
 		return newGuid, linkedJob, err
@@ -64,7 +64,7 @@ func GetJobSchedules(spaceguid string) ([]model.JobSchedule, error) {
 	var err error
 	result := make([]model.JobSchedule, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	if rows, err = db.Query("select j.appguid,j.name,j.command,s.expression,s.guid from schedules s, jobs j where s.schedulable_guid=j.guid and s.expression!=\"none\" and j.spaceguid=?", spaceguid); err != nil {
 		fmt.Printf("failed to query the job schedules, err: %s\n", err)
@@ -78,7 +78,7 @@ func GetJobSchedules(spaceguid string) ([]model.JobSchedule, error) {
 func jobschedules2array(rows *sql.Rows) []model.JobSchedule {
 	result := make([]model.JobSchedule, 0)
 	if rows != nil {
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 		var appguid, jobname, command, expression, scheduleguid string
 		for rows.Next() {
 			if err := rows.Scan(&appguid, &jobname, &command, &expression, &scheduleguid); err != nil {
@@ -103,7 +103,7 @@ func jobschedules2array(rows *sql.Rows) []model.JobSchedule {
 
 func DeleteJobSchedule(jobname, scheduleguid, spaceguid string) error {
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if result, err := db.Exec("delete from schedules where guid=? and schedulable_guid in (select guid from jobs where name=? and spaceguid=?)", scheduleguid, jobname, spaceguid); err != nil {
 		fmt.Printf("failed to delete schedule, error: %s\n", err)
 		return err
@@ -121,7 +121,7 @@ func InsertCallSchedule(scheduleCreateRequest model.ScheduleRequest) (string, Ca
 	var linkedCall Call
 	var newGuid string
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var calls []Call
 	if calls, err = GetCalls(scheduleCreateRequest.SpaceGUID, ""); err != nil {
 		return newGuid, linkedCall, err
@@ -159,7 +159,7 @@ func GetCallSchedules(spaceguid string) ([]model.CallSchedule, error) {
 	var err error
 	result := make([]model.CallSchedule, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	if rows, err = db.Query("select c.appguid,c.name,c.url,s.expression,s.guid from schedules s, calls c where s.schedulable_guid=c.guid and s.expression!=\"none\" and c.spaceguid=?", spaceguid); err != nil {
 		fmt.Printf("failed to query the call schedules, err: %s\n", err)
@@ -173,7 +173,7 @@ func GetCallSchedules(spaceguid string) ([]model.CallSchedule, error) {
 func callschedules2array(rows *sql.Rows) []model.CallSchedule {
 	result := make([]model.CallSchedule, 0)
 	if rows != nil {
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 		var appguid, callname, url, expression, scheduleguid string
 		for rows.Next() {
 			if err := rows.Scan(&appguid, &callname, &url, &expression, &scheduleguid); err != nil {
@@ -198,7 +198,7 @@ func callschedules2array(rows *sql.Rows) []model.CallSchedule {
 
 func DeleteCallSchedule(callname, scheduleguid, spaceguid string) error {
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if result, err := db.Exec("delete from schedules where guid=? and schedulable_guid in (select guid from calls where name=? and spaceguid=?)", scheduleguid, callname, spaceguid); err != nil {
 		fmt.Printf("failed to delete schedule, error: %s\n", err)
 		return err
@@ -215,17 +215,18 @@ func GetSchedulableJobs() ([]model.SchedulableJob, error) {
 	var err error
 	result := make([]model.SchedulableJob, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
-	if rows, err = db.Query("select s.guid,j.appguid,j.spaceguid,s.expression,j.name as jobname,j.command from schedules s, jobs j where s.expression_type=\"cron\" and s.expression!=\"none\" and s.schedulable_guid=j.guid and s.enabled=1"); err != nil {
+	if rows, err = db.Query("select s.guid,j.appguid,j.spaceguid,s.expression,j.name as jobname,j.command,j.memoryinmb,j.diskinmb from schedules s, jobs j where s.expression_type=\"cron\" and s.expression!=\"none\" and s.schedulable_guid=j.guid and s.enabled=1"); err != nil {
 		fmt.Printf("failed to query the job schedules/jobs, err: %s\n", err)
 		return nil, err
 	} else {
 		if rows != nil {
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 			var scheduleguid, expression, jobname, appguid, spaceguid, command string
+			var memoryInMB, diskInMB int
 			for rows.Next() {
-				if err = rows.Scan(&scheduleguid, &appguid, &spaceguid, &expression, &jobname, &command); err != nil {
+				if err = rows.Scan(&scheduleguid, &appguid, &spaceguid, &expression, &jobname, &command, &memoryInMB, &diskInMB); err != nil {
 					fmt.Printf("failed to scan the schedules/jobs row:%s\n", err)
 				} else {
 					result = append(result, model.SchedulableJob{
@@ -235,6 +236,8 @@ func GetSchedulableJobs() ([]model.SchedulableJob, error) {
 						AppGuid:      appguid,
 						SpaceGuid:    spaceguid,
 						Command:      command,
+						MemoryInMB:   memoryInMB,
+						DiskInMB:     diskInMB,
 					})
 				}
 			}
@@ -247,14 +250,14 @@ func GetSchedulableCalls() ([]model.SchedulableCall, error) {
 	var err error
 	result := make([]model.SchedulableCall, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	if rows, err = db.Query("select s.guid,c.appguid,c.spaceguid, s.expression,c.name as callname,c.url, c.authheader from schedules s, calls c where s.expression_type=\"cron\" and s.expression!=\"none\" and s.schedulable_guid=c.guid and s.enabled=1"); err != nil {
 		fmt.Printf("failed to query the call schedules/calls, err: %s\n", err)
 		return nil, err
 	} else {
 		if rows != nil {
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 			var scheduleguid, expression, callname, appguid, spaceguid, url, authheader string
 			for rows.Next() {
 				if err = rows.Scan(&scheduleguid, &appguid, &spaceguid, &expression, &callname, &url, &authheader); err != nil {
@@ -283,7 +286,7 @@ func DeleteScheduleByAge(maxDays int64) error {
 	cutOffDate := time.Now().Add(time.Duration(-nanoseconds))
 	fmt.Printf("cleaning schedules table for rows older than %d days (older than %s)\n", maxDays, cutOffDate.Format(time.RFC3339))
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var result sql.Result
 	if result, err = db.Exec("delete from schedules where expression_type=\"execute\" and guid in (select schedule_guid from histories where execution_start_time<?)", cutOffDate); err != nil {
 		fmt.Printf("failed to clean up schedules: %s\n", err)
