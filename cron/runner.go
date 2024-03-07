@@ -62,7 +62,7 @@ func AddJob(sjob model.SchedulableJob) {
 	} else {
 		key := fmt.Sprintf("%s-%s-%s", sjob.ScheduleGuid, sjob.SpaceGuid, sjob.JobName)
 		jobRunnerEntries[entryID] = key
-		fmt.Printf("job (id=%d [key=%s]) with jobname %s added with schedule %s\n", entryID, key, sjob.JobName, sjob.Expression)
+		fmt.Printf("job (id=%d [key=%s]) with jobname %s (mem=%d, disk=%d) added with schedule %s\n", entryID, key, sjob.JobName, sjob.MemoryInMB, sjob.DiskInMB, sjob.Expression)
 	}
 }
 

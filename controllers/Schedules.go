@@ -17,7 +17,7 @@ func JobScheduleCreate(w http.ResponseWriter, r *http.Request) {
 			util.WriteHttpResponse(w, http.StatusInternalServerError, fmt.Sprintf("failed to create schedule: %s", err))
 		} else {
 			fmt.Printf("userId %s created schedule for job %s for space guid %s\n", userId, job.Name, req.SpaceGUID)
-			cron.AddJob(model.SchedulableJob{ScheduleGuid: scheduleGuid, Expression: req.CronExpression, JobName: req.Name, AppGuid: job.AppGuid, SpaceGuid: req.SpaceGUID, Command: job.Command})
+			cron.AddJob(model.SchedulableJob{ScheduleGuid: scheduleGuid, Expression: req.CronExpression, JobName: req.Name, AppGuid: job.AppGuid, SpaceGuid: req.SpaceGUID, Command: job.Command, MemoryInMB: job.MemoryInMB, DiskInMB: job.DiskInMB})
 			util.WriteHttpResponse(w, http.StatusCreated, fmt.Sprintf("schedule created"))
 		}
 	}
