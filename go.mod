@@ -7,7 +7,7 @@ require (
 	github.com/cloudfoundry-community/go-cfenv v1.18.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/gorilla/context v1.1.1
+	github.com/gorilla/context v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/robfig/cron/v3 v3.0.1
 )
