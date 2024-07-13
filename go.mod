@@ -1,6 +1,6 @@
 module github.com/rabobank/scheduler-service-broker
 
-go 1.20
+go 1.22
 
 require (
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20211117203709-9b81b3940cc7
@@ -19,11 +19,9 @@ require (
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
+	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1 // indirect
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

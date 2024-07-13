@@ -17,6 +17,7 @@ The configuration for the template broker consists of the following environment 
 * **SSB_LISTEN_PORT** - The port that the broker should listen on, default is 8080.
 * **SSB_DB_NAME** - The name of the database to be used by the broker (usually this database is on the cf deployment's database VMs), default is ``schedulerdb``
 * **SSB_DB_USER** - The user to use while connecting to the database.
+* **SSB_DB_HOST** - The name of the host where the database lives (usually this database is on the cf deployment's database VMs), default is ``localhost``
 
 The following are properties to be set in credhub, do this by creating a credhub service instance, and binding the scheduler-service-broker app to it:
 * ``cf create-service --wait credhub default scheduler-service-broker-credentials -c '{ "SSB_CLIENT_SECRET": "secret1", "SSB_BROKER_PASSWORD": "secret2" , "SSB_DB_PASSWORD": "secret3" }'``
@@ -25,15 +26,17 @@ The following are properties to be set in credhub, do this by creating a credhub
 * **SSB_BROKER_PASSWORD** - The password for the broker (should be specified issuing the _cf create-service-broker_ cmd).
 * **SSB_DB_PASSWORD** - The password for SSB_DB_NAME
 
-Besides the broker protocol it also provides REST endpoints for handling schedules, jobs, calls and histories (basic CRUD operations), these endpoints are called by the scheduler-plugin.  
+Besides the broker protocol it also provides REST endpoints for handling schedules, jobs, calls and histories (basic CRUD operations), these endpoints are called by the [scheduler-plugin](https://github.com/rabobank/scheduler-plugin/).  
 In the background it also runs a routine that checks the existing schedules to see if it needs to run cf tasks, or needs to call URLs.
 
 ### Deploying/installing the broker
 
-## Prepare the database
+## Prepare the database on the CF deployment
 
+In most cases you will use the cf mysql database for the broker.  
 Do a bosh login into one of the cf database servers (_bosh -d cf ssh database/0_), and switch to root.
 Do a _mysql -u scheduler -p -h 127.0.0.1 --database=scheduler_, you will be prompted for the password, get this from credhub entry **/bosh/cf/scheduler_database_password**
+By setting the SSB_DB_HOST to another host, you can use another database server, outside CF.
 
 # Update cf-deployment
 We recommend using the cf mysql database.  
