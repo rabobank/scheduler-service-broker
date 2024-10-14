@@ -242,7 +242,13 @@ func DoJob(scheduledTime time.Time, job model.SchedulableJob) {
 	historyRecord := model.History{Guid: util.GenerateGUID(), ScheduledTime: scheduledTime, ExecutionStartTime: time.Now(), ScheduleGuid: job.ScheduleGuid, CreatedAt: time.Now()}
 
 	// run the actual cf task
-	taskCreateRequest := resource.TaskCreate{Command: &job.Command, MemoryInMB: &job.MemoryInMB, DiskInMB: &job.DiskInMB}
+	taskCreateRequest := resource.TaskCreate{Command: &job.Command}
+	if job.MemoryInMB > 0 {
+		taskCreateRequest.MemoryInMB = &job.MemoryInMB
+	}
+	if job.DiskInMB > 0 {
+		taskCreateRequest.DiskInMB = &job.DiskInMB
+	}
 	if task, err := conf.CfClient.Tasks.Create(conf.CfCtx, job.AppGuid, &taskCreateRequest); err != nil {
 		fmt.Printf("failed running cmd %s in app with guid %s: %s\n", job.Command, job.AppGuid, err)
 	} else {
