@@ -1,25 +1,26 @@
 package conf
 
 import (
+	"context"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfenv"
+	"github.com/cloudfoundry/go-cfclient/v3/client"
+	"github.com/cloudfoundry/go-cfclient/v3/config"
 	"github.com/rabobank/scheduler-service-broker/model"
 	"os"
 	"strconv"
 )
 
 var (
-	Catalog                 model.Catalog
-	ListenPort              int
-	Debug                   = false
-	httpTimeoutStr          = os.Getenv("SSB_HTTP_TIMEOUT")
-	HttpTimeout             int
-	HttpTimeoutDefault      = 10
-	ClientId                = os.Getenv("SSB_CLIENT_ID")
-	CfApiURL                = os.Getenv("SSB_CFAPI_URL")
-	tokenRefreshIntervalStr = os.Getenv("SSB_TOKEN_REFRESH_INTERVAL")
-	TokenRefreshInterval    int64
-	SchedulerEndpoint       = os.Getenv("SSB_SCHEDULER_ENDPOINT")
+	Catalog            model.Catalog
+	ListenPort         int
+	Debug              = false
+	httpTimeoutStr     = os.Getenv("SSB_HTTP_TIMEOUT")
+	HttpTimeout        int
+	HttpTimeoutDefault = 10
+	ClientId           = os.Getenv("SSB_CLIENT_ID")
+	CfApiURL           = os.Getenv("SSB_CFAPI_URL")
+	SchedulerEndpoint  = os.Getenv("SSB_SCHEDULER_ENDPOINT")
 
 	DebugStr      = os.Getenv("SSB_DEBUG")
 	BrokerUser    = os.Getenv("SSB_BROKER_USER")
@@ -35,6 +36,10 @@ var (
 	BrokerPassword string
 	DBPassword     string
 	ClientSecret   string
+
+	CfClient *client.Client
+	CfConfig *config.Config
+	CfCtx    = context.Background()
 )
 
 const BasicAuthRealm = "scheduler-service-broker"
@@ -61,15 +66,6 @@ func EnvironmentComplete() {
 	if CfApiURL == "" {
 		envComplete = false
 		fmt.Println("missing envvar: SSB_CFAPI_URL")
-	}
-	if len(tokenRefreshIntervalStr) == 0 {
-		TokenRefreshInterval = 90
-	} else {
-		var err error
-		TokenRefreshInterval, err = strconv.ParseInt(tokenRefreshIntervalStr, 0, 64)
-		if err != nil {
-			panic(err)
-		}
 	}
 	if SchedulerEndpoint == "" {
 		envComplete = false

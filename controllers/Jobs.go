@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/cron"
 	"github.com/rabobank/scheduler-service-broker/db"
 	"github.com/rabobank/scheduler-service-broker/model"
@@ -16,7 +17,7 @@ func JobCreate(w http.ResponseWriter, r *http.Request) {
 		if req.Name == "" {
 			util.WriteHttpResponse(w, http.StatusBadRequest, "the name of the job was empty")
 		} else {
-			if _, err = util.CfClient.AppByGuid(req.AppGUID); err != nil {
+			if _, err = conf.CfClient.Applications.Get(conf.CfCtx, req.AppGUID); err != nil {
 				util.WriteHttpResponse(w, http.StatusBadRequest, fmt.Sprintf("app with guid %s not found: %s", req.AppGUID, err))
 			} else {
 				if !util.IsAppBoundToSchedulerService(req.AppGUID) {
@@ -63,7 +64,7 @@ func JobGet(w http.ResponseWriter, r *http.Request) {
 			var jobs = make([]model.Job, 0)
 			for _, job := range result {
 				appName := "<unknown>"
-				if app, err := util.CfClient.GetAppByGuid(job.AppGuid); err == nil {
+				if app, err := conf.CfClient.Applications.Get(conf.CfCtx, job.AppGuid); err == nil {
 					appName = app.Name
 				}
 				jobs = append(jobs, model.Job{JobName: job.Name, AppName: appName, Command: job.Command, MemoryInMB: job.MemoryInMB, DiskInMB: job.DiskInMB})

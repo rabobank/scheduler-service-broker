@@ -15,6 +15,7 @@ const (
 )
 
 func Catalog(w http.ResponseWriter, r *http.Request) {
+	_ = r // get rid of compiler warning
 	util.WriteHttpResponse(w, http.StatusOK, conf.Catalog)
 }
 

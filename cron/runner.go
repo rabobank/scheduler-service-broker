@@ -1,8 +1,9 @@
 package cron
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/cloudfoundry/go-cfclient/v3/client"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/db"
 	"github.com/rabobank/scheduler-service-broker/model"
@@ -180,19 +181,13 @@ func StartHousekeeping() {
 				_ = db.DeleteHistoryByAge(conf.MaxHistoriesDays)
 				_ = db.DeleteScheduleByAge(conf.MaxHistoriesDays)
 			}
-			req := util.CfClient.NewRequest(http.MethodGet, "/v3/tasks?order_by=-created_at&per_page=100") // TODO should the per_page be configurable with an envvar?
-			if resp, err := util.CfClient.DoRequest(req); err != nil {
+			taskListOptions := client.TaskListOptions{ListOptions: &client.ListOptions{PerPage: 100, OrderBy: "-created_at"}}
+			if tasks, err := conf.CfClient.Tasks.ListAll(conf.CfCtx, &taskListOptions); err != nil {
 				fmt.Println(err)
 			} else {
-				body, _ := io.ReadAll(resp.Body)
-				response := model.TaskListResponse{}
-				if err = json.Unmarshal(body, &response); err != nil {
-					fmt.Println(err)
-				} else {
-					fmt.Printf("found %d cf tasks in %d pages...", response.Pagination.TotalResults, response.Pagination.TotalPages)
-					if err = db.UpdateState(response); err != nil {
-						fmt.Printf("failed to update histories state: %s\n", err)
-					}
+				fmt.Printf("found %d cf tasks", len(tasks))
+				if err = db.UpdateState(tasks); err != nil {
+					fmt.Printf("failed to update histories state: %s\n", err)
 				}
 			}
 		}
@@ -209,13 +204,13 @@ func DoCall(scheduledTime time.Time, call model.SchedulableCall) {
 	}
 	// do the actual call to the URL
 	transport := http.Transport{IdleConnTimeout: time.Second}
-	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+	httpClient := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
 	callUrl, _ := url.Parse(call.Url)
 	req := http.Request{Method: http.MethodGet, URL: callUrl}
 	if call.AuthHeader != "" {
 		req = http.Request{Method: http.MethodGet, URL: callUrl, Header: map[string][]string{"Authorization": {call.AuthHeader}}}
 	}
-	resp, err := client.Do(&req)
+	resp, err := httpClient.Do(&req)
 	historyRecord.ExecutionEndTime = time.Now()
 	if err != nil {
 		fmt.Printf("failed calling url \"%s\": %s\n", callUrl, err)
@@ -244,44 +239,22 @@ func DoCall(scheduledTime time.Time, call model.SchedulableCall) {
 }
 
 func DoJob(scheduledTime time.Time, job model.SchedulableJob) {
-	historyRecord := model.History{
-		Guid:               util.GenerateGUID(),
-		ScheduledTime:      scheduledTime,
-		ExecutionStartTime: time.Now(),
-		ScheduleGuid:       job.ScheduleGuid,
-		CreatedAt:          time.Now(),
-	}
-	// prepare the post body, the memory and disk are optional
-	postBodyDiskPart := ""
-	postBodyMemoryPart := ""
-	if job.DiskInMB > 0 {
-		postBodyDiskPart = fmt.Sprintf(",\"disk_in_mb\":\"%d\"", job.DiskInMB)
-	}
-	if job.MemoryInMB > 0 {
-		postBodyMemoryPart = fmt.Sprintf(",\"memory_in_mb\":\"%d\"", job.MemoryInMB)
-	}
-	postBody := fmt.Sprintf("{ \"command\": \"%s\" %s %s}", strings.ReplaceAll(job.Command, `"`, `\"`), postBodyDiskPart, postBodyMemoryPart)
+	historyRecord := model.History{Guid: util.GenerateGUID(), ScheduledTime: scheduledTime, ExecutionStartTime: time.Now(), ScheduleGuid: job.ScheduleGuid, CreatedAt: time.Now()}
 
-	// run the actual cf task  (https://v3-apidocs.cloudfoundry.org/version/3.112.0/index.html#create-a-task):
-	req := util.CfClient.NewRequestWithBody(http.MethodPost, fmt.Sprintf("/v3/apps/%s/tasks", job.AppGuid), strings.NewReader(postBody))
-	if resp, err := util.CfClient.DoRequest(req); err != nil {
+	// run the actual cf task
+	taskCreateRequest := resource.TaskCreate{Command: &job.Command, MemoryInMB: &job.MemoryInMB, DiskInMB: &job.DiskInMB}
+	if task, err := conf.CfClient.Tasks.Create(conf.CfCtx, job.AppGuid, &taskCreateRequest); err != nil {
 		fmt.Printf("failed running cmd %s in app with guid %s: %s\n", job.Command, job.AppGuid, err)
 	} else {
 		historyRecord.ExecutionEndTime = time.Now()
-		body, _ := io.ReadAll(resp.Body)
-		response := model.TaskCreateResponse{}
-		if err = json.Unmarshal(body, &response); err != nil {
-			fmt.Printf("failed running cmd %s in app with guid %s: %s\n", job.Command, job.AppGuid, err)
-		} else {
-			util.PrintfIfDebug("response from schedule task: %s\n", body)
-			historyRecord.State = response.State
-			historyRecord.TaskGuid = response.GUID
-			historyRecord.Message = ""
-			if response.Result.FailureReason != nil {
-				historyRecord.Message = util.LastXChars(fmt.Sprintf("%s", response.Result.FailureReason), 255)
-			}
+		historyRecord.State = task.State
+		historyRecord.TaskGuid = task.GUID
+		historyRecord.Message = ""
+		if task.Result.FailureReason != nil {
+			historyRecord.Message = util.LastXChars(fmt.Sprintf("%s", *task.Result.FailureReason), 255)
 		}
 	}
+
 	if job.ScheduleGuid == "" {
 		// only when we did a "cf run-job"
 		var err error

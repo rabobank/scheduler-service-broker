@@ -38,7 +38,7 @@ func initialize() {
 		} else {
 
 			// login to cf and get a client handle
-			util.CfClient = *util.GetCFClient()
+			util.InitCFClient()
 
 			// test if the DB can be opened
 			database := db.GetDB()

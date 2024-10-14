@@ -1,46 +1,35 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/client"
+	"github.com/cloudfoundry/go-cfclient/v3/config"
 	"github.com/golang-jwt/jwt"
 	"github.com/rabobank/scheduler-service-broker/conf"
-	"github.com/rabobank/scheduler-service-broker/model"
-	"io"
-	"os"
+	"log"
 	"time"
 )
 
-func GetCFClient() *cfclient.Client {
+func InitCFClient() *client.Client {
 	var err error
-	c := &cfclient.Config{
-		ApiAddress:        conf.CfApiURL,
-		ClientID:          conf.ClientId,
-		ClientSecret:      conf.ClientSecret,
-		SkipSslValidation: true,
+	if conf.CfConfig, err = config.New(conf.CfApiURL, config.ClientCredentials(conf.ClientId, conf.ClientSecret), config.SkipTLSValidation()); err != nil {
+		log.Fatalf("failed to create new config: %s", err)
 	}
-	fmt.Printf("getting cf client from %s...", conf.CfApiURL)
-	var client *cfclient.Client
-	if client, err = cfclient.NewClient(c); err != nil {
-		fmt.Printf("\nfailed getting cf client:%s\n", err)
-		os.Exit(8)
+	if conf.CfClient, err = client.New(conf.CfConfig); err != nil {
+		log.Fatalf("failed to create new client: %s", err)
 	} else {
-		fmt.Println("done")
 		// refresh the client every hour to get a new refresh token
 		go func() {
-			channel := time.Tick(time.Duration(conf.TokenRefreshInterval) * time.Minute)
+			channel := time.Tick(time.Duration(15) * time.Minute)
 			for range channel {
-				if client, err = cfclient.NewClient(c); err != nil {
-					fmt.Printf("failed to refresh cf client, error is %s\n", err)
-				} else {
-					fmt.Println("refreshed cf client, got new token")
-					CfClient = *client
+				conf.CfClient, err = client.New(conf.CfConfig)
+				if err != nil {
+					log.Printf("failed to refresh cfclient, error is %s", err)
 				}
 			}
 		}()
 	}
-	return client
+	return conf.CfClient
 }
 
 // IsUserAuthorisedForSpace - It takes the jwt, extracts the userId from it,
@@ -52,57 +41,46 @@ func IsUserAuthorisedForSpace(token jwt.Token, spaceGuid string) bool {
 	if Contains(scopes, "cloud_controller.admin") {
 		return true
 	}
-	req := CfClient.NewRequest("GET", fmt.Sprintf("/v3/roles?types=space_developer,space_manager&space_guids=%s&user_guids=%s", spaceGuid, userId))
-	if resp, err := CfClient.DoRequest(req); err != nil {
+	roleListOptions := client.RoleListOptions{
+		ListOptions: &client.ListOptions{},
+		Types:       client.Filter{Values: []string{"space_developer", "space_manager"}},
+		SpaceGUIDs:  client.Filter{Values: []string{spaceGuid}},
+		UserGUIDs:   client.Filter{Values: []string{userId}},
+	}
+	if roles, err := conf.CfClient.Roles.ListAll(conf.CfCtx, &roleListOptions); err != nil {
 		fmt.Printf("failed to query Cloud Controller for roles: %s\n", err)
 		return false
 	} else {
-		var body []byte
-		if body, err = io.ReadAll(resp.Body); err != nil {
-			fmt.Printf("failed to read response from /v3/roles query to Cloud Controller: %s\n", err)
+		PrintfIfDebug("found %d roles for userId %s and spaceguid %s\n", len(roles), userId, spaceGuid)
+		if len(roles) == 0 {
 			return false
-		} else {
-			var v3RolesResponse model.GenericV3Response
-			if err = json.Unmarshal(body, &v3RolesResponse); err != nil {
-				fmt.Printf("failed to parse response from /v3/roles query to Cloud Controller: %s\n", err)
-				return false
-			} else {
-				PrintfIfDebug("found %d roles for userId %s and spaceguid %s\n", v3RolesResponse.Pagination.TotalResults, userId, spaceGuid)
-				if v3RolesResponse.Pagination.TotalResults == 0 {
-					return false
-				}
-				return true
-			}
 		}
+		return true
 	}
 }
 
 func IsAppBoundToSchedulerService(appguid string) bool {
-	req := CfClient.NewRequest("GET", "/v3/service_plans?service_offering_names=scheduler") // TODO make the service name configurable?
-	if resp, err := CfClient.DoRequest(req); err != nil {
+	planListOptions := client.ServicePlanListOptions{
+		ListOptions:          &client.ListOptions{},
+		ServiceOfferingNames: client.Filter{Values: []string{"scheduler"}}, // TODO make the service name configurable?
+	}
+	if plans, err := conf.CfClient.ServicePlans.ListAll(conf.CfCtx, &planListOptions); err != nil {
 		fmt.Println(err)
 		return false
 	} else {
-		body, _ := io.ReadAll(resp.Body)
-		response := model.GenericV3Response{}
-		if err = json.Unmarshal(body, &response); err != nil {
-			fmt.Println(err)
+		if len(plans) != 1 {
 			return false
+		}
+		bindingListOptions := client.ServiceCredentialBindingListOptions{
+			ListOptions:      &client.ListOptions{},
+			AppGUIDs:         client.Filter{Values: []string{appguid}},
+			ServicePlanGUIDs: client.Filter{Values: []string{plans[0].GUID}},
+		}
+		if bindings, err := conf.CfClient.ServiceCredentialBindings.ListAll(conf.CfCtx, &bindingListOptions); err != nil {
+			fmt.Println(err)
 		} else {
-			planguid := response.Resources[0].Guid
-			req = CfClient.NewRequest("GET", fmt.Sprintf("/v3/service_credential_bindings?app_guids=%s&service_plan_guids=%s", appguid, planguid))
-			if resp, err = CfClient.DoRequest(req); err != nil {
-				fmt.Println(err)
-			} else {
-				body, _ = io.ReadAll(resp.Body)
-				if err = json.Unmarshal(body, &response); err != nil {
-					fmt.Println(err)
-					return false
-				} else {
-					if len(response.Resources) == 1 {
-						return true
-					}
-				}
+			if len(bindings) == 1 {
+				return true
 			}
 		}
 	}

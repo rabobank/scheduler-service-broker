@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/rabobank/scheduler-service-broker/model"
 	"github.com/rabobank/scheduler-service-broker/util"
 	"time"
@@ -12,7 +13,7 @@ import (
 func InsertHistory(history model.History) (string, error) {
 	var err error
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	history.Guid = util.GenerateGUID()
 	util.PrintfIfDebug("inserting history: %s\n", history)
 	var scheduleGuid sql.NullString
@@ -37,7 +38,7 @@ func GetJobHistories(spaceguid, name string) ([]model.History, error) {
 	}
 	result := make([]model.History, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	rows, err = db.Query("select h.guid,h.scheduled_time,h.execution_start_time,h.execution_end_time,h.message,h.state,h.schedule_guid,h.task_guid,h.created_at from histories h, schedulables a, schedules s, jobs j where h.schedule_guid=s.guid and s.schedulable_guid=a.guid and a.guid=j.guid and j.spaceguid like ? and j.name like ? order by h.execution_end_time desc", spaceguid, name)
 	if err != nil {
@@ -59,7 +60,7 @@ func GetCallHistories(spaceguid, name string) ([]model.History, error) {
 	}
 	result := make([]model.History, 0)
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	rows, err = db.Query("select h.guid,h.scheduled_time,h.execution_start_time,h.execution_end_time,h.message,h.state,h.schedule_guid,h.task_guid,h.created_at from histories h, schedulables a, schedules s, calls c where h.schedule_guid=s.guid and s.schedulable_guid=a.guid and a.guid=c.guid and c.spaceguid=? and c.name=? order by h.execution_end_time desc", spaceguid, name)
 	if err != nil {
@@ -74,7 +75,7 @@ func GetCallHistories(spaceguid, name string) ([]model.History, error) {
 func histories2array(rows *sql.Rows) []model.History {
 	result := make([]model.History, 0)
 	if rows != nil {
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 		var guid, message, state, scheduleGuid, taskGuid string
 		var scheduledTime, executionStartTime, executionEndTime, createdAt time.Time
 		for rows.Next() {
@@ -104,7 +105,7 @@ func DeleteHistoryByAge(maxDays int64) error {
 	cutOffDate := time.Now().Add(time.Duration(-nanoseconds))
 	fmt.Printf("cleaning histories table for rows older than %d days (older than %s)\n", maxDays, cutOffDate.Format(time.RFC3339))
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var result sql.Result
 	if result, err = db.Exec("delete from histories where execution_start_time<?", cutOffDate); err != nil {
 		fmt.Printf("failed to clean up histories: %s\n", err)
@@ -116,19 +117,19 @@ func DeleteHistoryByAge(maxDays int64) error {
 	return nil
 }
 
-func UpdateState(response model.TaskListResponse) error {
+func UpdateState(tasks []*resource.Task) error {
 	var err error
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	totErrCount := 0
 	var totUpdates int64
-	if response.Pagination.TotalResults > 0 {
-		for _, resource := range response.Resources {
+	if len(tasks) > 0 {
+		for _, task := range tasks {
 			message := ""
-			if resource.State == "FAILED" {
-				message = util.LastXChars(resource.Result.FailureReason, 255)
+			if task.State == "FAILED" {
+				message = util.LastXChars(*task.Result.FailureReason, 255)
 			}
-			if result, err := db.Exec("update histories set state=?, message=? where task_guid=?", resource.State, message, resource.GUID); err != nil {
+			if result, err := db.Exec("update histories set state=?, message=? where task_guid=?", task.State, message, task.GUID); err != nil {
 				totErrCount++
 				fmt.Printf("failed to clean up histories: %s\n", err)
 			} else {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/model"
 	"github.com/rabobank/scheduler-service-broker/util"
 	"time"
@@ -85,16 +86,10 @@ func jobschedules2array(rows *sql.Rows) []model.JobSchedule {
 				fmt.Printf("failed to scan the schedule row, error:%s\n", err)
 			} else {
 				appName := "<unknown"
-				if app, err := util.CfClient.GetAppByGuid(appguid); err == nil {
+				if app, err := conf.CfClient.Applications.Get(conf.CfCtx, appguid); err == nil {
 					appName = app.Name
 				}
-				result = append(result, model.JobSchedule{
-					AppName:        appName,
-					Name:           jobname,
-					Command:        command,
-					CronExpression: expression,
-					ScheduleGuid:   scheduleguid,
-				})
+				result = append(result, model.JobSchedule{AppName: appName, Name: jobname, Command: command, CronExpression: expression, ScheduleGuid: scheduleguid})
 			}
 		}
 	}
@@ -180,16 +175,10 @@ func callschedules2array(rows *sql.Rows) []model.CallSchedule {
 				fmt.Printf("failed to scan the schedule row, error:%s\n", err)
 			} else {
 				appName := "<unknown"
-				if app, err := util.CfClient.GetAppByGuid(appguid); err == nil {
+				if app, err := conf.CfClient.Applications.Get(conf.CfCtx, appguid); err == nil {
 					appName = app.Name
 				}
-				result = append(result, model.CallSchedule{
-					AppName:        appName,
-					Name:           callname,
-					Url:            url,
-					CronExpression: expression,
-					ScheduleGuid:   scheduleguid,
-				})
+				result = append(result, model.CallSchedule{AppName: appName, Name: callname, Url: url, CronExpression: expression, ScheduleGuid: scheduleguid})
 			}
 		}
 	}

@@ -7,17 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/model"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
-)
-
-var (
-	CfClient = cfclient.Client{}
 )
 
 func WriteHttpResponse(w http.ResponseWriter, code int, object interface{}) {

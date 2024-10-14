@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/rabobank/scheduler-service-broker/conf"
 	"github.com/rabobank/scheduler-service-broker/cron"
 	"github.com/rabobank/scheduler-service-broker/db"
 	"github.com/rabobank/scheduler-service-broker/model"
@@ -15,7 +16,7 @@ func CallCreate(w http.ResponseWriter, r *http.Request) {
 		if req.Name == "" {
 			util.WriteHttpResponse(w, http.StatusBadRequest, "the name of the call was empty")
 		} else {
-			if _, err := util.CfClient.AppByGuid(req.AppGUID); err != nil {
+			if _, err := conf.CfClient.Applications.Get(conf.CfCtx, req.AppGUID); err != nil {
 				util.WriteHttpResponse(w, http.StatusBadRequest, fmt.Sprintf("app with guid %s not found: %s", req.AppGUID, err))
 			} else {
 				if !util.IsAppBoundToSchedulerService(req.AppGUID) {
@@ -62,7 +63,7 @@ func CallGet(w http.ResponseWriter, r *http.Request) {
 			var calls = make([]model.Call, 0)
 			for _, call := range result {
 				appName := "<unknown>"
-				if app, err := util.CfClient.GetAppByGuid(call.AppGuid); err == nil {
+				if app, err := conf.CfClient.Applications.Get(conf.CfCtx, call.AppGuid); err == nil {
 					appName = app.Name
 				}
 				calls = append(calls, model.Call{CallName: call.Name, AppName: appName, Url: call.Url, AuthHeader: call.AuthHeader})
