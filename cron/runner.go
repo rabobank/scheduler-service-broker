@@ -185,7 +185,7 @@ func StartHousekeeping() {
 			if tasks, err := conf.CfClient.Tasks.ListAll(conf.CfCtx, &taskListOptions); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Printf("found %d cf tasks", len(tasks))
+				fmt.Printf("found %d cf tasks\n", len(tasks))
 				if err = db.UpdateState(tasks); err != nil {
 					fmt.Printf("failed to update histories state: %s\n", err)
 				}
