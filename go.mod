@@ -5,6 +5,8 @@ go 1.23.0
 toolchain go1.23.3
 
 replace (
+	golang.org/x/crypto => golang.org/x/crypto v0.35.0
+	golang.org/x/net => golang.org/x/net v0.35.0
 	golang.org/x/text => golang.org/x/text v0.22.0
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 )
