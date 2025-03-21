@@ -14,7 +14,7 @@ replace (
 require (
 	github.com/cloudfoundry-community/go-cfenv v1.18.0
 	github.com/cloudfoundry/go-cfclient/v3 v3.0.0-alpha.10
-	github.com/go-sql-driver/mysql v1.9.0
+	github.com/go-sql-driver/mysql v1.9.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/context v1.1.2
 	github.com/gorilla/mux v1.8.1
