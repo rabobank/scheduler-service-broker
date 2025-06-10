@@ -3,8 +3,9 @@ module github.com/rabobank/scheduler-service-broker
 go 1.24
 
 replace (
-	golang.org/x/net => golang.org/x/net v0.39.0
-	golang.org/x/text => golang.org/x/text v0.24.0
+	golang.org/x/crypto => golang.org/x/crypto v0.39.0
+	golang.org/x/net => golang.org/x/net v0.41.0
+	golang.org/x/text => golang.org/x/text v0.26.0
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -30,8 +31,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/oauth2 v0.29.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
