@@ -19,13 +19,13 @@ type Call struct {
 }
 
 func (call Call) String() string {
-	return fmt.Sprintf("Guid:%s AppGuid:%s, SpaceGuid:%s, State:%s, Name:%s, Url:%s, AuthHeader:%s", call.Guid, call.AppGuid, call.SpaceGuid, call.State, call.Name, call.Url, call.AuthHeader)
+	return fmt.Sprintf("Guid:%s AppGuid:%s, SpaceGuid:%s, State:%s, Name:%s, Url:%s, AuthHeader: <redacted>", call.Guid, call.AppGuid, call.SpaceGuid, call.State, call.Name, call.Url)
 }
 
 func InsertCall(call Call) (string, error) {
 	var err error
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	newGuid := util.GenerateGUID()
 	if _, err = db.Exec("insert into schedulables(guid) values(?)", newGuid); err != nil {
 		fmt.Printf("failed to insert schedulable, error: %s\n", err)
@@ -51,7 +51,7 @@ func GetCalls(spaceguid, name string) ([]Call, error) {
 		name = "%"
 	}
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var rows *sql.Rows
 	rows, err = db.Query("select guid,appguid,spaceguid,state,name,url,authheader from calls where spaceguid like ? and name like ?", spaceguid, name)
 	if err != nil {
@@ -66,7 +66,7 @@ func GetCalls(spaceguid, name string) ([]Call, error) {
 func calls2array(rows *sql.Rows) []Call {
 	result := make([]Call, 0)
 	if rows != nil {
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 		var guid, appguid, spaceguid, state, name, url, authheader string
 		for rows.Next() {
 			err := rows.Scan(&guid, &appguid, &spaceguid, &state, &name, &url, &authheader)
@@ -91,7 +91,7 @@ func calls2array(rows *sql.Rows) []Call {
 func DeleteCallBySpaceGuidAndCallname(spaceguid, callname string) error {
 	var err error
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	// delete the schedulable, call will be cascade-deleted, if there are still schedules that "run" this call, they will also be cascade-deleted
 	result, err := db.Exec("delete from schedulables where guid in (select guid from calls where name=? and spaceguid=?)", callname, spaceguid)
 	numDeletes, _ := result.RowsAffected()
@@ -110,7 +110,7 @@ func DeleteCallBySpaceGuidAndCallname(spaceguid, callname string) error {
 func DeleteCallBySpaceGuidAndAppGuid(spaceguid, appguid string) error {
 	var err error
 	db := GetDB()
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	// delete the schedulable, call will be cascade-deleted, if there are still schedules that "run" this call, they will also be cascade-deleted
 	result, err := db.Exec("delete from schedulables where guid in (select guid from calls where appguid=? and spaceguid=?)", appguid, spaceguid)
 	numDeletes, _ := result.RowsAffected()

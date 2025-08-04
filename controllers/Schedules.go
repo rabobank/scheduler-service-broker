@@ -53,7 +53,7 @@ func CallScheduleCreate(w http.ResponseWriter, r *http.Request) {
 			util.WriteHttpResponse(w, http.StatusInternalServerError, fmt.Sprintf("failed to create schedule: %s", err))
 		} else {
 			fmt.Printf("userId %s created schedule for call %s for space guid %s\n", userId, call.Name, req.SpaceGUID)
-			cron.AddCall(model.SchedulableCall{ScheduleGuid: scheduleGuid, Expression: req.CronExpression, CallName: req.Name, AppGuid: call.AppGuid, SpaceGuid: req.SpaceGUID, Url: call.Url})
+			cron.AddCall(model.SchedulableCall{ScheduleGuid: scheduleGuid, Expression: req.CronExpression, CallName: req.Name, AppGuid: call.AppGuid, SpaceGuid: req.SpaceGUID, Url: call.Url, AuthHeader: call.AuthHeader})
 			util.WriteHttpResponse(w, http.StatusCreated, fmt.Sprintf("schedule created"))
 		}
 	}
