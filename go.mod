@@ -3,13 +3,13 @@ module github.com/rabobank/scheduler-service-broker
 go 1.26.0
 
 replace (
-	golang.org/x/net => golang.org/x/net v0.59.0
-	golang.org/x/text => golang.org/x/text v0.42.0
+	golang.org/x/net => golang.org/x/net v0.61.0
+	golang.org/x/text => golang.org/x/text v0.43.0
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/cloudfoundry-community/go-cfenv v1.24.3
+	github.com/cloudfoundry-community/go-cfenv v1.24.4
 	github.com/cloudfoundry/go-cfclient/v3 v3.0.0-beta.1
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
