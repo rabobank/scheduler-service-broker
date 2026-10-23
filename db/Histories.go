@@ -131,7 +131,7 @@ func UpdateState(tasks []*resource.Task) error {
 			}
 			if result, err := db.Exec("update histories set state=?, message=? where task_guid=?", task.State, message, task.GUID); err != nil {
 				totErrCount++
-				fmt.Printf("failed to clean up histories: %s\n", err)
+				fmt.Printf("failed to update histories: %s\n", err)
 			} else {
 				affectedRows, _ := result.RowsAffected()
 				totUpdates = totUpdates + affectedRows

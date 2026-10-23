@@ -60,7 +60,7 @@ func DumpRequest(r *http.Request) {
 			fmt.Printf("Error reading body: %v\n", err)
 		} else {
 			fmt.Println(string(body))
-			// Restore the io.ReadCloser to it's original state
+			// Restore the io.ReadCloser to its original state
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 		}
 	}

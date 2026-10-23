@@ -34,7 +34,7 @@ func InitCFClient() *client.Client {
 
 // IsUserAuthorisedForSpace - It takes the jwt, extracts the userId from it,
 //
-//	then queries cf (/v3/roles) to check if that user has at least developer or manager role for the give space
+//	then queries cf (/v3/roles) to check if that user has at least developer or manager role for the given space
 func IsUserAuthorisedForSpace(token jwt.Token, spaceGuid string) bool {
 	userId := token.Claims.(jwt.MapClaims)["user_id"].(string)
 	scopes := token.Claims.(jwt.MapClaims)["scope"].([]interface{})
