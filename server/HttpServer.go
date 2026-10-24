@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-// StartServer - We start an httpd with 2 routers, one for the cf service-broker api's, that one uses Basic Authentication, and another one for all the CRUD requests for the scheduler, that one requires a valid JWT.
+// StartServer - We start an httpd with 2 routers, one for the cf service-broker APIs, that one uses Basic Authentication, and another one for all the CRUD requests for the scheduler, that one requires a valid JWT.
 func StartServer() {
 	brokerRouter := mux.NewRouter()
 	brokerRouter.Use(controllers.DebugMiddleware)

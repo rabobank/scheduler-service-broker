@@ -55,7 +55,7 @@ func EnvironmentComplete() {
 		var err error
 		HttpTimeout, err = strconv.Atoi(httpTimeoutStr)
 		if err != nil {
-			fmt.Printf("failed reading envvar PCSB_HTTP_TIMEOUT, err: %s\n", err)
+			fmt.Printf("failed reading envvar SSB_HTTP_TIMEOUT, err: %s\n", err)
 			envComplete = false
 		}
 	}
